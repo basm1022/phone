@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الهاتف الذكي</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; background-color: #e0e0e0; }
+        .phone { width: 320px; height: 550px; border: 10px solid black; border-radius: 25px; margin: auto; background: white; position: relative; }
+        .screen { width: 100%; height: 100%; padding: 10px; box-sizing: border-box; }
+        .app { display: inline-block; width: 90px; height: 90px; margin: 10px; background: lightgray; border-radius: 15px; cursor: pointer; text-align: center; }
+        .app img { width: 60px; height: 60px; margin-top: 10px; }
+        .hidden { display: none; }
+        .chat-box { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="screen">
+            <div id="loginScreen">
+                <h3>تسجيل الدخول</h3>
+                <input type="text" id="username" placeholder="ادخل اسمك">
+                <button onclick="registerUser()">تسجيل</button>
+            </div>
+            <div id="appScreen" class="hidden">
+                <div class="app" onclick="openApp('messages')">
+                    <img src="messages.png" alt="رسائل">
+                    <p>الرسائل</p>
+                </div>
+                <div class="app" onclick="openApp('contacts')">
+                    <img src="contacts.png" alt="جهات">
+                    <p>جهات الاتصال</p>
+                </div>
+            </div>
+            <div id="messagesScreen" class="hidden">
+                <input type="text" id="search" placeholder="بحث عن شخص" oninput="searchContacts()">
+                <ul id="contactsList"></ul>
+                <button onclick="closeMessages()">رجوع</button>
+            </div>
+            <div id="chatScreen" class="hidden">
+                <h3 id="chatWith"></h3>
+                <div class="chat-box" id="chatBox"></div>
+                <input type="text" id="messageInput" placeholder="اكتب رسالة">
+                <button onclick="sendMessage()">إرسال</button>
+                <button onclick="closeChat()">رجوع</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let users = [];
+        let currentChatUser = "";
+        let messages = JSON.parse(localStorage.getItem("messages")) || {};
+
+        function registerUser() {
+            let username = document.getElementById('username').value;
+            if (username.trim() !== "") {
+                users.push(username);
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('appScreen').classList.remove('hidden');
+                alert("تم تسجيل الدخول بنجاح!");
+            }
+        }
+
+        function openApp(appName) {
+            document.getElementById('appScreen').classList.add('hidden');
+            document.getElementById(appName + 'Screen').classList.remove('hidden');
+            if (appName === 'messages') updateContactsList();
+        }
+
+        function closeMessages() {
+            document.getElementById('messagesScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+        }
+
+        function updateContactsList() {
+            let list = document.getElementById('contactsList');
+            list.innerHTML = "";
+            users.forEach(user => {
+                let li = document.createElement('li');
+                li.textContent = user;
+                li.onclick = () => openChat(user);
+                list.appendChild(li);
+            });
+        }
+
+        function searchContacts() {
+            let searchValue = document.getElementById('search').value.toLowerCase();
+            let listItems = document.querySelectorAll('#contactsList li');
+            listItems.forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(searchValue) ? "block" : "none";
+            });
+        }
+
+        function openChat(user) {
+            currentChatUser = user;
+            document.getElementById('chatWith').textContent = "محادثة مع " + user;
+            document.getElementById('messagesScreen').classList.add('hidden');
+            document.getElementById('chatScreen').classList.remove('hidden');
+            loadMessages();
+        }
+
+        function closeChat() {
+            document.getElementById('chatScreen').classList.add('hidden');
+            document.getElementById('messagesScreen').classList.remove('hidden');
+        }
+
+        function sendMessage() {
+            let message = document.getElementById('messageInput').value;
+            if (message.trim() !== "") {
+                if (!messages[currentChatUser]) messages[currentChatUser] = [];
+                messages[currentChatUser].push("أنت: " + message);
+                document.getElementById('messageInput').value = "";
+                localStorage.setItem("messages", JSON.stringify(messages));
+                loadMessages();
+            }
+        }
+
+        function loadMessages() {
+            let chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = "";
+            if (messages[currentChatUser]) {
+                messages[currentChatUser].forEach(msg => {
+                    let p = document.createElement('p');
+                    p.textContent = msg;
+                    chatBox.appendChild(p);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
